@@ -44,8 +44,8 @@ document.addEventListener('DOMContentLoaded', function() {
     // Animate skill bars
     animateSkillBars();
     
-    // Contact form handling (static version)
-    setupStaticContactForm();
+    // Contact form handling with multiple methods
+    setupContactForm();
     
     // Animate elements on scroll
     setupScrollAnimations();
@@ -73,35 +73,78 @@ function animateSkillBars() {
     });
 }
 
-// Setup Contact Form (Static Version)
-function setupStaticContactForm() {
+// Enhanced Contact Form Setup
+function setupContactForm() {
     const form = document.getElementById('contact-form');
     if (!form) return;
     
-    form.addEventListener('submit', function(e) {
-        // Basic validation
-        const name = document.getElementById('name').value.trim();
-        const email = document.getElementById('email').value.trim();
-        const subject = document.getElementById('subject').value.trim();
-        const message = document.getElementById('message').value.trim();
+    form.addEventListener('submit', async function(e) {
+        e.preventDefault();
         
+        const formData = new FormData(form);
+        const name = formData.get('name');
+        const email = formData.get('email');
+        const phone = formData.get('phone') || 'Not provided';
+        const subject = formData.get('subject');
+        const message = formData.get('message');
+        
+        // Basic validation
         if (!name || !email || !subject || !message) {
-            e.preventDefault();
             showMessage('Please fill in all required fields.', 'error');
             return;
         }
         
         if (!isValidEmail(email)) {
-            e.preventDefault();
             showMessage('Please enter a valid email address.', 'error');
             return;
         }
         
-        // If using Formspree or similar service, the form will submit normally
-        // Otherwise, prevent default and show message
-        if (!form.action || form.action.includes('YOUR_FORM_ID')) {
-            e.preventDefault();
-            showMessage('Contact form is not configured yet. Please email directly at bhartitushar534@gmail.com', 'error');
+        // Show loading
+        const submitBtn = form.querySelector('button[type="submit"]');
+        const originalText = submitBtn.innerHTML;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending...';
+        submitBtn.disabled = true;
+        
+        try {
+            // Try Formspree first
+            const response = await fetch(form.action, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'Accept': 'application/json'
+                }
+            });
+            
+            if (response.ok) {
+                showMessage('Thank you! Your message has been sent successfully. I\'ll get back to you soon!', 'success');
+                form.reset();
+            } else {
+                throw new Error('Formspree failed');
+            }
+        } catch (error) {
+            console.log('Formspree failed, trying mailto fallback');
+            
+            // Fallback to mailto
+            const mailtoSubject = encodeURIComponent(`Portfolio Contact: ${subject}`);
+            const mailtoBody = encodeURIComponent(
+                `Name: ${name}\n` +
+                `Email: ${email}\n` +
+                `Phone: ${phone}\n\n` +
+                `Message:\n${message}\n\n` +
+                `---\nSent from portfolio website`
+            );
+            
+            const mailtoLink = `mailto:bhartitushar534@gmail.com?subject=${mailtoSubject}&body=${mailtoBody}`;
+            
+            // Open email client
+            window.location.href = mailtoLink;
+            
+            showMessage('Opening your email client to send the message. If it doesn\'t open automatically, please email me directly at bhartitushar534@gmail.com', 'success');
+            form.reset();
+        } finally {
+            // Reset button
+            submitBtn.innerHTML = originalText;
+            submitBtn.disabled = false;
         }
     });
 }
@@ -139,6 +182,8 @@ function showMessage(message, type) {
         font-weight: 500;
         animation: slideIn 0.3s ease;
         cursor: pointer;
+        max-width: 400px;
+        word-wrap: break-word;
     `;
     
     if (type === 'success') {
@@ -153,12 +198,12 @@ function showMessage(message, type) {
     
     container.appendChild(messageDiv);
     
-    // Auto remove after 5 seconds
+    // Auto remove after 8 seconds
     setTimeout(() => {
         if (messageDiv.parentNode) {
             messageDiv.parentNode.removeChild(messageDiv);
         }
-    }, 5000);
+    }, 8000);
     
     // Remove on click
     messageDiv.addEventListener('click', () => {
