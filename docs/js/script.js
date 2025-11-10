@@ -288,16 +288,9 @@ function typeWriter() {
 // Initialize typing animation
 window.addEventListener('load', typeWriter);
 
-// Parallax Effect for Hero Section
-window.addEventListener('scroll', function() {
-    const scrolled = window.pageYOffset;
-    const hero = document.querySelector('.hero');
-    if (hero) {
-        hero.style.transform = `translateY(${scrolled * 0.5}px)`;
-    }
-});
+// Removed parallax effect to prevent section overlap
 
-// Add CSS for active nav link and animations
+// Add CSS for active nav link, animations, and fix section spacing
 const style = document.createElement('style');
 style.textContent = `
     .nav-link.active {
@@ -305,6 +298,23 @@ style.textContent = `
     }
     .nav-link.active::after {
         width: 100% !important;
+    }
+    
+    /* Fix section spacing and prevent overlap */
+    section {
+        position: relative;
+        z-index: 1;
+    }
+    
+    .hero {
+        position: relative;
+        z-index: 2;
+    }
+    
+    .about {
+        position: relative;
+        z-index: 3;
+        margin-top: 0;
     }
     
     @keyframes slideIn {
